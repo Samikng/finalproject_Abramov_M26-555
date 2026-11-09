@@ -1,5 +1,5 @@
 [project]
-name = "finalproject-surname-group"
+name = "finalproject_Abramov_M26-555"
 version = "0.1.0"
 description = "ValutaTrade Hub — консольная платформа для отслеживания и симуляции торговли фиатными и криптовалютами"
 readme = "README.md"
@@ -31,7 +31,6 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "N", "UP", "B", "SIM"]
 
-# Конфигурация приложения, читается SettingsLoader (valutatrade_hub/infra/settings.py)
 [tool.valutatrade]
 data_dir = "data"
 users_file = "users.json"
@@ -39,7 +38,6 @@ portfolios_file = "portfolios.json"
 rates_file = "rates.json"
 history_file = "exchange_rates.json"
 rates_ttl_seconds = 300
-refresh_retry_seconds = 60
 default_base_currency = "USD"
 log_dir = "logs"
 log_level = "INFO"

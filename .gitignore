@@ -1,19 +1,14 @@
-# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
 
-# Сборка
 dist/
 build/
 
-# Окружение
 .venv/
 .env
 
-# Инструменты
 .ruff_cache/
 
-# Логи и временные файлы приложения
 logs/
 *.tmp

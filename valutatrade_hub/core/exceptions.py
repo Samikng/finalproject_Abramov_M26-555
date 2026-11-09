@@ -26,7 +26,6 @@ class InsufficientFundsError(ValutaTradeError):
     """Недостаточно средств на кошельке."""
 
     def __init__(self, available: float, required: float, code: str) -> None:
-        # Ленивый импорт: utils зависит от currencies, а currencies — от exceptions.
         from valutatrade_hub.core.utils import format_amount
 
         self.available = available

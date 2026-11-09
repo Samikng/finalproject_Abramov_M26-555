@@ -42,19 +42,13 @@ def load_api_key() -> str | None:
 class ParserConfig:
     """Все изменяемые параметры Parser Service в одном месте."""
 
-    # Ключ загружается из переменной окружения / .env
     EXCHANGERATE_API_KEY: str | None = field(default_factory=load_api_key)
 
-    # Эндпоинты
     COINGECKO_URL: str = "https://api.coingecko.com/api/v3/simple/price"
     EXCHANGERATE_API_URL: str = "https://v6.exchangerate-api.com/v6"
-    # Открытый эндпоинт ExchangeRate-API без ключа — запасной вариант,
-    # если EXCHANGERATE_API_KEY не задан.
-    EXCHANGERATE_OPEN_URL: str = "https://open.er-api.com/v6/latest"
 
-    # Списки валют
     BASE_CURRENCY: str = "USD"
-    FIAT_CURRENCIES: tuple[str, ...] = ("EUR", "GBP", "RUB", "JPY", "CNY")
+    FIAT_CURRENCIES: tuple[str, ...] = ("EUR", "GBP", "RUB")
     CRYPTO_CURRENCIES: tuple[str, ...] = ("BTC", "ETH", "SOL")
     CRYPTO_ID_MAP: dict[str, str] = field(
         default_factory=lambda: {
@@ -64,7 +58,6 @@ class ParserConfig:
         }
     )
 
-    # Пути (из SettingsLoader, чтобы Core и Parser смотрели в одни файлы)
     RATES_FILE_PATH: Path = field(
         default_factory=lambda: SettingsLoader().data_path("rates_file")
     )
@@ -72,8 +65,6 @@ class ParserConfig:
         default_factory=lambda: SettingsLoader().data_path("history_file")
     )
 
-    # Сетевые параметры
     REQUEST_TIMEOUT: int = 10
 
-    # Планировщик
     UPDATE_INTERVAL_SECONDS: int = 300

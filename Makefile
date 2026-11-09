@@ -16,7 +16,4 @@ package-install:
 lint:
 	uv run ruff check .
 
-format:
-	uv run ruff format .
-
-.PHONY: install project build publish package-install lint format
+.PHONY: install project build publish package-install lint

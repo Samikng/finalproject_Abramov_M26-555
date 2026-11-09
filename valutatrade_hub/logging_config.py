@@ -19,7 +19,6 @@ from valutatrade_hub.infra.settings import SettingsLoader
 
 ACTIONS_LOGGER = "valutatrade.actions"
 PARSER_LOGGER = "valutatrade.parser"
-APP_LOGGER = "valutatrade"
 
 _configured = False
 
@@ -53,11 +52,6 @@ def setup_logging(console: bool = True) -> None:
     formatter = logging.Formatter(
         settings.get("log_format"), datefmt=settings.get("log_date_format")
     )
-
-    app_logger = logging.getLogger(APP_LOGGER)
-    app_logger.setLevel(level)
-    app_logger.propagate = False
-    app_logger.addHandler(_file_handler("app.log", formatter))
 
     actions_logger = logging.getLogger(ACTIONS_LOGGER)
     actions_logger.setLevel(level)

@@ -43,7 +43,6 @@ class BaseApiClient(ABC):
 
     def __init__(self, config: ParserConfig | None = None) -> None:
         self.config = config or ParserConfig()
-        # Метаданные последнего запроса: request_ms, status_code, etag, raw_ids.
         self.last_meta: dict[str, Any] = {}
 
     @abstractmethod
@@ -144,12 +143,12 @@ class ExchangeRateApiClient(BaseApiClient):
 
     def _url(self) -> str:
         cfg = self.config
-        if cfg.EXCHANGERATE_API_KEY:
-            return (
-                f"{cfg.EXCHANGERATE_API_URL}/{cfg.EXCHANGERATE_API_KEY}"
-                f"/latest/{cfg.BASE_CURRENCY}"
-            )
-        return f"{cfg.EXCHANGERATE_OPEN_URL}/{cfg.BASE_CURRENCY}"
+        if not cfg.EXCHANGERATE_API_KEY:
+            raise ApiRequestError(f"{self.source_name}: не задан EXCHANGERATE_API_KEY")
+        return (
+            f"{cfg.EXCHANGERATE_API_URL}/{cfg.EXCHANGERATE_API_KEY}"
+            f"/latest/{cfg.BASE_CURRENCY}"
+        )
 
     def _describe_error(self, status_code: int, body: Any) -> str:
         if isinstance(body, dict) and body.get("error-type") in self._ERROR_TYPES:
@@ -165,7 +164,6 @@ class ExchangeRateApiClient(BaseApiClient):
             reason = self._ERROR_TYPES.get(error_type, error_type or "ошибка API")
             raise ApiRequestError(f"{self.source_name}: {reason}")
 
-        # API отдаёт «сколько X за 1 USD»; храним «сколько USD за 1 X».
         raw_rates = data.get("rates") or data.get("conversion_rates") or {}
         rates: dict[str, float] = {}
         for code in cfg.FIAT_CURRENCIES:

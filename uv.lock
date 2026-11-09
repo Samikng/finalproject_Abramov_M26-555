@@ -143,7 +143,7 @@ wheels = [
 ]
 
 [[package]]
-name = "finalproject-surname-group"
+name = "finalproject-abramov-m26-555"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

@@ -8,7 +8,6 @@
     data_dir               — каталог с JSON-файлами (относительно корня проекта);
     users_file, portfolios_file, rates_file, history_file — имена файлов в data_dir;
     rates_ttl_seconds      — сколько секунд курс в rates.json считается свежим;
-    refresh_retry_seconds  — пауза перед повторной автопопыткой обновить курсы;
     default_base_currency  — базовая валюта по умолчанию (USD);
     log_dir, log_level, log_format, log_date_format,
     log_max_bytes, log_backup_count — параметры логирования и ротации.
@@ -27,7 +26,6 @@ DEFAULTS: dict[str, Any] = {
     "rates_file": "rates.json",
     "history_file": "exchange_rates.json",
     "rates_ttl_seconds": 300,
-    "refresh_retry_seconds": 60,
     "default_base_currency": "USD",
     "log_dir": "logs",
     "log_level": "INFO",

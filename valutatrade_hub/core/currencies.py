@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 
 from valutatrade_hub.core.exceptions import CurrencyNotFoundError
 
-# Код валюты: верхний регистр, 2–5 символов, без пробелов.
 CURRENCY_CODE_PATTERN = re.compile(r"^[A-Z0-9]{2,5}$")
 
 
@@ -86,8 +85,6 @@ _REGISTRY: dict[str, Currency] = {
         FiatCurrency("Euro", "EUR", "Eurozone"),
         FiatCurrency("British Pound", "GBP", "United Kingdom"),
         FiatCurrency("Russian Ruble", "RUB", "Russia"),
-        FiatCurrency("Japanese Yen", "JPY", "Japan"),
-        FiatCurrency("Chinese Yuan", "CNY", "China"),
         CryptoCurrency("Bitcoin", "BTC", "SHA-256", 1.12e12),
         CryptoCurrency("Ethereum", "ETH", "Ethash", 4.5e11),
         CryptoCurrency("Solana", "SOL", "Proof of History", 6.8e10),

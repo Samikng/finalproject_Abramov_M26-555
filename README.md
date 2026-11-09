@@ -13,7 +13,7 @@
 ## Структура проекта
 
 ```
-finalproject_surname_group/
+finalproject_Abramov_M26-555/
 ├── data/
 │   ├── users.json            # пользователи (соль + SHA-256 хеш пароля)
 │   ├── portfolios.json       # портфели и кошельки
@@ -70,14 +70,12 @@ make package-install  # uv tool install dist/*.whl
 |---|---|
 | `register --username <str> --password <str>` | регистрация (пароль ≥ 4 символов) |
 | `login --username <str> --password <str>` | вход |
-| `logout` | выход из сессии |
 | `show-portfolio [--base <код>]` | кошельки и итог в базовой валюте (USD по умолчанию) |
 | `buy --currency <код> --amount <float>` | покупка (оплата с USD-кошелька) |
 | `sell --currency <код> --amount <float>` | продажа (выручка на USD-кошелёк) |
 | `get-rate --from <код> --to <код>` | курс и обратный курс |
 | `update-rates [--source coingecko\|exchangerate]` | обновить курсы через Parser Service |
 | `show-rates [--currency <код>] [--top <N>] [--base <код>]` | курсы из кеша |
-| `currencies` | поддерживаемые валюты |
 
 Логика сделок: покупка не-USD валюты списывает `amount × курс` с USD-кошелька,
 продажа начисляет выручку на USD-кошелёк. Покупка самой USD — пополнение счёта,
@@ -123,15 +121,15 @@ make package-install  # uv tool install dist/*.whl
 Недостаточно средств: доступно 0.0400 BTC, требуется 1.0000 BTC
 > get-rate --from USD --to ABC
 Неизвестная валюта 'ABC'
-Поддерживаемые валюты: BTC, CNY, ETH, EUR, GBP, JPY, RUB, SOL, USD
+Поддерживаемые валюты: BTC, ETH, EUR, GBP, RUB, SOL, USD
 Подробнее: help get-rate
 > update-rates
 INFO: Starting rates update...
 INFO: Fetching from CoinGecko... OK (3 rates)
-INFO: Fetching from ExchangeRate-API... OK (5 rates)
-INFO: Writing 8 rates to rates.json...
-INFO: Update finished: 8 rates, 0 source errors.
-Update successful. Total rates updated: 8. Last refresh: 2026-11-09T16:51:54Z
+INFO: Fetching from ExchangeRate-API... OK (3 rates)
+INFO: Writing 6 rates to rates.json...
+INFO: Update finished: 6 rates, 0 source errors.
+Update successful. Total rates updated: 6. Last refresh: 2026-11-09T16:51:54Z
 > show-rates --top 2
 Rates from cache (updated at 2026-11-09T16:51:54Z):
 +---------+----------+---------------------+-----------+
@@ -175,7 +173,8 @@ Rates from cache (updated at 2026-11-09T16:51:54Z):
   EXCHANGERATE_API_KEY=ваш_ключ
   ```
 
-  Без ключа используется открытый эндпоинт `open.er-api.com` того же сервиса.
+  Без ключа ExchangeRate-API не опрашивается (ошибка пишется в лог), курсы
+  криптовалют из CoinGecko при этом обновляются.
 
 Ручное обновление: `update-rates` в CLI. Периодическое обновление:
 
@@ -190,7 +189,7 @@ uv run python -m valutatrade_hub.parser_service.scheduler --interval 300
 
 Секция `[tool.valutatrade]` в `pyproject.toml` (читает `SettingsLoader`):
 пути к данным (`data_dir`, `users_file`, …), `rates_ttl_seconds`,
-`refresh_retry_seconds`, `default_base_currency`, а также параметры логов
+`default_base_currency`, а также параметры логов
 `log_dir`, `log_level`, `log_format`, `log_max_bytes`, `log_backup_count`.
 Параметры API и списки валют задаются в `valutatrade_hub/parser_service/config.py`.
 
@@ -200,10 +199,9 @@ uv run python -m valutatrade_hub.parser_service.scheduler --interval 300
 
 - `actions.log` — операции REGISTER / LOGIN / BUY / SELL (`@log_action`):
   ```
-  INFO 2026-11-09T19:51:54 BUY user='alice' currency='BTC' amount=0.0500 rate=74872.00 base='USD' changes=[BTC:0.0000->0.0500,USD:5000.0000->1256.4000] result=OK duration_ms=2.1
+  INFO 2026-11-09T19:51:54 BUY user='alice' currency='BTC' amount=0.0500 rate=74872.00 base='USD' changes=[BTC:0.0000->0.0500,USD:5000.0000->1256.4000] result=OK
   ```
-- `parser.log` — шаги Parser Service;
-- `app.log` — служебные сообщения и непредвиденные ошибки.
+- `parser.log` — шаги Parser Service.
 
 ## Демо
 

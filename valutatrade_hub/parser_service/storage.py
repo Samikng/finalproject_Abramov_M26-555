@@ -16,8 +16,6 @@ class RatesStorage:
         self.rates_path = Path(rates_path)
         self.history_path = Path(history_path)
 
-    # --- rates.json: последний срез по каждой паре ---
-
     def load_snapshot(self) -> dict[str, Any]:
         data = read_json(self.rates_path, {})
         if not isinstance(data, dict):
@@ -43,8 +41,6 @@ class RatesStorage:
         snapshot["last_refresh"] = last_refresh
         atomic_write_json(self.rates_path, snapshot)
         return updated
-
-    # --- exchange_rates.json: журнал всех измерений ---
 
     def load_history(self) -> list[dict[str, Any]]:
         data = read_json(self.history_path, [])

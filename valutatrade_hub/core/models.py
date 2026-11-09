@@ -18,8 +18,6 @@ from valutatrade_hub.core.utils import (
 MIN_PASSWORD_LENGTH = 4
 SALT_BYTES = 8
 
-# Фиксированные курсы «к USD» — заглушка для Portfolio.get_total_value(),
-# если вызывающий код не передал собственный источник курсов.
 DEFAULT_RATES_TO_USD: dict[str, float] = {
     "USD": 1.0,
     "EUR": 1.0786,
@@ -59,7 +57,7 @@ class User:
             raise ValueError("user_id должен быть положительным целым числом")
         self._user_id = user_id
         self._username = ""
-        self.username = username  # валидация через сеттер
+        self.username = username
         self._hashed_password = hashed_password
         self._salt = salt
         self._registration_date = registration_date
@@ -76,8 +74,6 @@ class User:
             salt=salt,
             registration_date=datetime.now().replace(microsecond=0),
         )
-
-    # --- Свойства ---
 
     @property
     def user_id(self) -> int:
@@ -105,8 +101,6 @@ class User:
     def registration_date(self) -> datetime:
         return self._registration_date
 
-    # --- Поведение ---
-
     def get_user_info(self) -> str:
         """Информация о пользователе без пароля и соли."""
         return (
@@ -126,8 +120,6 @@ class User:
             return False
         candidate = hash_password(password, self._salt)
         return secrets.compare_digest(candidate, self._hashed_password)
-
-    # --- Сериализация ---
 
     def to_dict(self) -> dict[str, Any]:
         return {

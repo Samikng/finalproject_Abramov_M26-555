@@ -16,7 +16,7 @@ from typing import Any
 from prettytable import PrettyTable
 
 from valutatrade_hub.core import usecases
-from valutatrade_hub.core.currencies import get_currency, supported_codes
+from valutatrade_hub.core.currencies import supported_codes
 from valutatrade_hub.core.exceptions import (
     ApiRequestError,
     AuthRequiredError,
@@ -32,13 +32,13 @@ from valutatrade_hub.core.utils import (
     format_rate,
     format_timestamp,
 )
-from valutatrade_hub.logging_config import APP_LOGGER, setup_logging
+from valutatrade_hub.logging_config import ACTIONS_LOGGER, setup_logging
 from valutatrade_hub.parser_service.updater import SOURCES
 
 PROMPT = "> "
 EXIT_COMMANDS = {"exit", "quit"}
 
-logger = logging.getLogger(APP_LOGGER)
+logger = logging.getLogger(ACTIONS_LOGGER)
 
 
 class CliUsageError(Exception):
@@ -48,7 +48,7 @@ class CliUsageError(Exception):
 class _CommandParser(argparse.ArgumentParser):
     """ArgumentParser, который не завершает процесс при ошибке."""
 
-    def error(self, message: str) -> None:  # type: ignore[override]
+    def error(self, message: str) -> None:
         raise CliUsageError(f"{message}\nСправка: help {self.prog}")
 
 
@@ -75,8 +75,6 @@ def _build_parsers() -> dict[str, argparse.ArgumentParser]:
     p.add_argument("--username", required=True)
     p.add_argument("--password", required=True)
 
-    add("logout", "Выйти из текущей сессии.")
-
     p = add("show-portfolio", "Показать кошельки и итоговую стоимость.")
     p.add_argument("--base", default=None, help="базовая валюта (по умолчанию USD)")
 
@@ -99,8 +97,6 @@ def _build_parsers() -> dict[str, argparse.ArgumentParser]:
     p.add_argument("--currency", default=None)
     p.add_argument("--top", type=_positive_int, default=None)
     p.add_argument("--base", default=None)
-
-    add("currencies", "Список поддерживаемых валют.")
     return parsers
 
 
@@ -113,17 +109,13 @@ class CliApp:
         self.handlers: dict[str, Callable[[argparse.Namespace], None]] = {
             "register": self.cmd_register,
             "login": self.cmd_login,
-            "logout": self.cmd_logout,
             "show-portfolio": self.cmd_show_portfolio,
             "buy": self.cmd_buy,
             "sell": self.cmd_sell,
             "get-rate": self.cmd_get_rate,
             "update-rates": self.cmd_update_rates,
             "show-rates": self.cmd_show_rates,
-            "currencies": self.cmd_currencies,
         }
-
-    # --- Цикл и диспетчеризация ---
 
     def run(self) -> None:
         print("ValutaTrade Hub. Введите 'help' для списка команд, 'exit' для выхода.")
@@ -159,7 +151,7 @@ class CliApp:
         except CliUsageError as error:
             print(f"Ошибка: {error}")
             return
-        except SystemExit:  # --help внутри команды
+        except SystemExit:
             return
         self._run_handler(command, handler, namespace)
 
@@ -191,7 +183,7 @@ class CliApp:
             print(error)
         except (ValueError, TypeError) as error:
             print(f"Ошибка: {error}")
-        except Exception as error:  # последний рубеж: CLI не должен падать
+        except Exception as error:
             logger.exception(f"Unexpected error in '{command}'")
             print(f"Непредвиденная ошибка: {error}")
 
@@ -212,8 +204,6 @@ class CliApp:
             raise AuthRequiredError()
         return self.current_user
 
-    # --- Пользователи ---
-
     def cmd_register(self, args: argparse.Namespace) -> None:
         result = usecases.register_user(args.username, args.password)
         print(
@@ -225,13 +215,6 @@ class CliApp:
     def cmd_login(self, args: argparse.Namespace) -> None:
         self.current_user = usecases.login_user(args.username, args.password)
         print(f"Вы вошли как '{self.current_user['username']}'")
-
-    def cmd_logout(self, _args: argparse.Namespace) -> None:
-        user = self._require_login()
-        self.current_user = None
-        print(f"Сеанс пользователя '{user['username']}' завершён")
-
-    # --- Портфель и сделки ---
 
     def cmd_show_portfolio(self, args: argparse.Namespace) -> None:
         user = self._require_login()
@@ -284,8 +267,6 @@ class CliApp:
             if result["is_stale"]:
                 print(_STALE_HINT)
 
-    # --- Курсы ---
-
     def cmd_get_rate(self, args: argparse.Namespace) -> None:
         info = usecases.get_rate(args.from_code, args.to_code)
         src, dst = info["from"], info["to"]
@@ -324,10 +305,6 @@ class CliApp:
             )
         print(table)
 
-    def cmd_currencies(self, _args: argparse.Namespace) -> None:
-        for code in supported_codes():
-            print(get_currency(code).get_display_info())
-
 
 _STALE_HINT = (
     "Внимание: курс устарел и не удалось его обновить. "
@@ -337,7 +314,6 @@ _STALE_HINT = (
 
 def main() -> None:
     """Точка входа (скрипт ``project``)."""
-    # Консоли с однобайтовой кодировкой не должны падать на символах вроде «→».
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
     setup_logging()

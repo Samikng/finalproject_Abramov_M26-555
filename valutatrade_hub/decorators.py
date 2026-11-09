@@ -1,7 +1,7 @@
 """Декоратор @log_action — прозрачное логирование доменных операций.
 
 Поля записи: timestamp (ISO, из форматтера), action, user, currency, amount,
-rate, base, result=OK|ERROR, error_type/error_message, duration_ms.
+rate, base, result=OK|ERROR, error_type/error_message.
 При ``verbose=True`` добавляется состояние кошельков «было→стало».
 
 Декоратор не глотает исключения: фиксирует их в логе и пробрасывает дальше.
@@ -11,7 +11,6 @@ rate, base, result=OK|ERROR, error_type/error_message, duration_ms.
 import functools
 import inspect
 import logging
-import time
 from collections.abc import Callable
 from typing import Any, ParamSpec, TypeVar
 
@@ -31,14 +30,13 @@ def _resolve_username(arguments: dict[str, Any], result: Any) -> str | None:
     user_id = arguments.get("user_id")
     if user_id is None:
         return None
-    # Ленивый импорт, чтобы decorators не зависел от инфраструктуры при импорте.
     from valutatrade_hub.infra.database import DatabaseManager
 
     try:
         for record in DatabaseManager().read("users"):
             if record.get("user_id") == user_id:
                 return record.get("username")
-    except Exception:  # noqa: BLE001 — логирование не должно ломать операцию
+    except Exception:
         pass
     return f"id={user_id}"
 
@@ -95,23 +93,19 @@ def log_action(
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             bound = signature.bind_partial(*args, **kwargs)
             arguments = dict(bound.arguments)
-            started = time.perf_counter()
             try:
                 result = func(*args, **kwargs)
             except Exception as error:
-                elapsed = (time.perf_counter() - started) * 1000
                 parts = _build_message(action, arguments, None, verbose)
                 parts += [
                     "result=ERROR",
                     f"error_type={type(error).__name__}",
                     f"error_message='{error}'",
-                    f"duration_ms={elapsed:.1f}",
                 ]
                 logger.error(" ".join(parts))
                 raise
-            elapsed = (time.perf_counter() - started) * 1000
             parts = _build_message(action, arguments, result, verbose)
-            parts += ["result=OK", f"duration_ms={elapsed:.1f}"]
+            parts.append("result=OK")
             logger.info(" ".join(parts))
             return result
 

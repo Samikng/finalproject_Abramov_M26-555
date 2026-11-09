@@ -13,9 +13,6 @@ CRYPTO_DECIMALS = 4
 FIAT_DECIMALS = 2
 
 
-# --- Валидация ---------------------------------------------------------------
-
-
 def normalize_currency_code(code: Any) -> str:
     """Проверить формат кода валюты и привести его к верхнему регистру.
 
@@ -50,9 +47,6 @@ def validate_amount(amount: Any) -> float:
     return value
 
 
-# --- Форматирование ----------------------------------------------------------
-
-
 def format_amount(code: str, amount: float) -> str:
     """Баланс/количество: 4 знака для криптовалют, 2 — для фиата."""
     decimals = CRYPTO_DECIMALS if is_crypto_code(code) else FIAT_DECIMALS
@@ -72,9 +66,6 @@ def format_rate(rate: float) -> str:
         return f"{rate:.4f}"
     text = f"{rate:.8f}".rstrip("0")
     return text if not text.endswith(".") else text + "0"
-
-
-# --- Время -------------------------------------------------------------------
 
 
 def utc_now_iso() -> str:
@@ -105,9 +96,6 @@ def format_timestamp(timestamp: str | None) -> str:
         return timestamp
 
 
-# --- Кеширование (замыкание) -------------------------------------------------
-
-
 def make_mtime_cache(loader: Callable[[Path], Any]) -> Callable[[Path], Any]:
     """Обернуть загрузчик файла кешем, который сбрасывается при изменении файла.
 
@@ -133,5 +121,5 @@ def make_mtime_cache(loader: Callable[[Path], Any]) -> Callable[[Path], Any]:
     def invalidate() -> None:
         cache.clear()
 
-    cached.invalidate = invalidate  # type: ignore[attr-defined]
+    cached.invalidate = invalidate
     return cached

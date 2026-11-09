@@ -7,7 +7,6 @@ CLI вызывает только функции этого модуля. Зде
 """
 
 import logging
-import time
 from typing import Any
 
 from valutatrade_hub.core.currencies import get_currency, is_crypto_code
@@ -34,22 +33,17 @@ from valutatrade_hub.core.utils import (
 from valutatrade_hub.decorators import log_action
 from valutatrade_hub.infra.database import DatabaseManager, read_json
 from valutatrade_hub.infra.settings import SettingsLoader
-from valutatrade_hub.logging_config import APP_LOGGER
+from valutatrade_hub.logging_config import PARSER_LOGGER
 from valutatrade_hub.parser_service.updater import UpdateResult, build_updater
 
-logger = logging.getLogger(APP_LOGGER)
+logger = logging.getLogger(PARSER_LOGGER)
 
 settings = SettingsLoader()
 db = DatabaseManager()
 
-# Курсы во всех парах хранятся относительно этой валюты (X_USD).
 PIVOT_CURRENCY = "USD"
 
-# Кеш чтения rates.json (замыкание, сбрасывается при изменении файла).
 _read_rates_file = make_mtime_cache(lambda path: read_json(path, {}))
-
-
-# --- Пользователи ------------------------------------------------------------
 
 
 def _find_user_record(users: list[dict], username: str) -> dict | None:
@@ -94,9 +88,6 @@ def login_user(username: str, password: str) -> dict[str, Any]:
     return {"user_id": user.user_id, "username": user.username}
 
 
-# --- Курсы -------------------------------------------------------------------
-
-
 def _load_pairs() -> tuple[dict[str, dict], str | None]:
     """Пары из rates.json (поддерживается и плоский формат из ранних версий)."""
     data = _read_rates_file(db.path("rates"))
@@ -139,7 +130,7 @@ def _compute_rate(
 
 
 def _is_fresh(updated_at: str | None) -> bool:
-    if updated_at is None:  # USD→USD
+    if updated_at is None:
         return True
     try:
         return age_seconds(updated_at) <= float(settings.get("rates_ttl_seconds"))
@@ -147,33 +138,15 @@ def _is_fresh(updated_at: str | None) -> bool:
         return False
 
 
-def _make_refresher():
-    """Замыкание: автообновление курсов не чаще, чем раз в refresh_retry_seconds.
-
-    Защищает от серии сетевых таймаутов, когда за одну команду нужно
-    несколько курсов, а Parser Service недоступен.
-    """
-    last_attempt: float | None = None
-
-    def refresh() -> bool:
-        nonlocal last_attempt
-        retry = float(settings.get("refresh_retry_seconds"))
-        now = time.monotonic()
-        if last_attempt is not None and now - last_attempt < retry:
-            return False
-        last_attempt = now
-        try:
-            build_updater().run_update()
-        except ApiRequestError as error:
-            logger.warning(f"Auto refresh failed: {error}")
-            return False
-        _read_rates_file.invalidate()
-        return True
-
-    return refresh
-
-
-_refresh_rates = _make_refresher()
+def _refresh_rates() -> bool:
+    """Обновить кеш курсов через Parser Service; False, если не удалось."""
+    try:
+        build_updater().run_update()
+    except ApiRequestError as error:
+        logger.warning(f"Auto refresh failed: {error}")
+        return False
+    _read_rates_file.invalidate()
+    return True
 
 
 def get_rate(from_code: str, to_code: str) -> dict[str, Any]:
@@ -228,9 +201,6 @@ def _trade_rate(code: str, base: str) -> dict[str, Any] | None:
         raise RateUnavailableError(
             code, base, message=f"Не удалось получить курс для {code}→{base}"
         ) from None
-
-
-# --- Портфель и сделки -------------------------------------------------------
 
 
 def _portfolio_record(portfolios: list[dict], user_id: int) -> dict:
@@ -375,7 +345,6 @@ def get_portfolio_summary(user_id: int, base: str | None = None) -> dict[str, An
             value = wallet.balance * info["rate"]
         rows.append({"currency_code": code, "balance": wallet.balance, "value": value})
 
-    # Валюты без курса не учитываются в итоге (о них сообщает has_unpriced).
     total = portfolio.get_total_value(
         base_code, rate_provider=lambda src, _dst: known_rates.get(src, 0.0)
     )
@@ -387,9 +356,6 @@ def get_portfolio_summary(user_id: int, base: str | None = None) -> dict[str, An
         "is_stale": stale,
         "has_unpriced": any(r["value"] is None for r in rows),
     }
-
-
-# --- Parser Service ----------------------------------------------------------
 
 
 def update_rates(source: str | None = None) -> UpdateResult:
