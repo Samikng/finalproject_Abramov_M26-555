@@ -18,3 +18,7 @@ Parser Service (получение курсов из внешних API).
 
 Операции пользователей логируются в `logs/actions.log`, работа Parser Service —
 в `logs/parser.log`.
+
+## Демо
+
+![Демо](demo.gif)
