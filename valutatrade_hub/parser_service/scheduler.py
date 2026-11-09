@@ -55,11 +55,9 @@ def main() -> None:
     parser.add_argument(
         "--interval", type=int, default=defaults.UPDATE_INTERVAL_SECONDS
     )
-    parser.add_argument("--iterations", type=int, default=None)
-    parser.add_argument("--source", choices=["coingecko", "exchangerate"])
     args = parser.parse_args()
     setup_logging()
-    RatesScheduler(build_updater(args.source), args.interval).run(args.iterations)
+    RatesScheduler(build_updater(), args.interval).run()
 
 
 if __name__ == "__main__":

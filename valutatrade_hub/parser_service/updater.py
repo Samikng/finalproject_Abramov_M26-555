@@ -26,7 +26,6 @@ class UpdateResult:
     """Итог одного запуска обновления."""
 
     total_rates: int = 0
-    updated_pairs: int = 0
     last_refresh: str | None = None
     errors: list[str] = field(default_factory=list)
 
@@ -82,7 +81,7 @@ class RatesUpdater:
 
         result.last_refresh = utc_now_iso()
         log.info(f"Writing {len(pairs)} rates to {self.storage.rates_path.name}...")
-        result.updated_pairs = self.storage.save_snapshot(pairs, result.last_refresh)
+        self.storage.save_snapshot(pairs, result.last_refresh)
         added = self.storage.append_history(history)
         log.debug(f"History: {added} new records in {self.storage.history_path.name}")
         result.total_rates = len(pairs)

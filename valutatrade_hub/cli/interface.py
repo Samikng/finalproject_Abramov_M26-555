@@ -36,7 +36,7 @@ from valutatrade_hub.logging_config import ACTIONS_LOGGER, setup_logging
 from valutatrade_hub.parser_service.updater import SOURCES
 
 PROMPT = "> "
-EXIT_COMMANDS = {"exit", "quit"}
+EXIT_COMMANDS = {"exit"}
 
 logger = logging.getLogger(ACTIONS_LOGGER)
 

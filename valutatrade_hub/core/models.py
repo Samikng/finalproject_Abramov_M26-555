@@ -140,9 +140,6 @@ class User:
             registration_date=datetime.fromisoformat(data["registration_date"]),
         )
 
-    def __repr__(self) -> str:
-        return f"User(user_id={self._user_id}, username={self._username!r})"
-
 
 class Wallet:
     """Кошелёк пользователя в одной конкретной валюте."""
@@ -191,9 +188,6 @@ class Wallet:
     def to_dict(self) -> dict[str, Any]:
         return {"currency_code": self.currency_code, "balance": self._balance}
 
-    def __repr__(self) -> str:
-        return f"Wallet({self.currency_code!r}, balance={self._balance})"
-
 
 class Portfolio:
     """Все кошельки одного пользователя."""
@@ -234,10 +228,6 @@ class Portfolio:
     def get_wallet(self, currency_code: str) -> Wallet | None:
         """Кошелёк по коду валюты или None."""
         return self._wallets.get(normalize_currency_code(currency_code))
-
-    def get_or_create_wallet(self, currency_code: str) -> Wallet:
-        """Вернуть кошелёк, создав его при отсутствии."""
-        return self.get_wallet(currency_code) or self.add_currency(currency_code)
 
     def get_total_value(
         self, base_currency: str = "USD", rate_provider: RateProvider | None = None

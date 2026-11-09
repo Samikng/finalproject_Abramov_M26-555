@@ -36,9 +36,6 @@ class Currency(ABC):
         """Является ли валюта криптовалютой."""
         return False
 
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}(code={self.code!r}, name={self.name!r})"
-
 
 class FiatCurrency(Currency):
     """Фиатная валюта, выпускаемая государством или валютным союзом."""

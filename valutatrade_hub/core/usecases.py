@@ -89,14 +89,11 @@ def login_user(username: str, password: str) -> dict[str, Any]:
 
 
 def _load_pairs() -> tuple[dict[str, dict], str | None]:
-    """Пары из rates.json (поддерживается и плоский формат из ранних версий)."""
+    """Пары и время последнего обновления из rates.json."""
     data = _read_rates_file(db.path("rates"))
     if not isinstance(data, dict):
         return {}, None
-    pairs = data.get("pairs")
-    if not isinstance(pairs, dict):
-        pairs = {k: v for k, v in data.items() if isinstance(v, dict) and "rate" in v}
-    return pairs, data.get("last_refresh")
+    return data.get("pairs") or {}, data.get("last_refresh")
 
 
 def _rate_to_pivot(code: str, pairs: dict[str, dict]) -> tuple[float, str] | None:
@@ -104,9 +101,6 @@ def _rate_to_pivot(code: str, pairs: dict[str, dict]) -> tuple[float, str] | Non
     direct = pairs.get(f"{code}_{PIVOT_CURRENCY}")
     if direct and direct.get("rate"):
         return float(direct["rate"]), direct.get("updated_at", "")
-    inverse = pairs.get(f"{PIVOT_CURRENCY}_{code}")
-    if inverse and inverse.get("rate"):
-        return 1 / float(inverse["rate"]), inverse.get("updated_at", "")
     return None
 
 
@@ -241,7 +235,7 @@ def buy(user_id: int, currency_code: str, amount: float) -> dict[str, Any]:
             before = pay_wallet.balance
             pay_wallet.withdraw(cost)
             changes.append(_change(base, before, pay_wallet.balance))
-        wallet = portfolio.get_or_create_wallet(code)
+        wallet = portfolio.get_wallet(code) or portfolio.add_currency(code)
         before = wallet.balance
         wallet.deposit(amount)
         changes.insert(0, _change(code, before, wallet.balance))
@@ -279,7 +273,7 @@ def sell(user_id: int, currency_code: str, amount: float) -> dict[str, Any]:
         wallet.withdraw(amount)
         changes.append(_change(code, before, wallet.balance))
         if rate_info is not None:
-            receive_wallet = portfolio.get_or_create_wallet(base)
+            receive_wallet = portfolio.get_wallet(base) or portfolio.add_currency(base)
             before = receive_wallet.balance
             receive_wallet.deposit(revenue)
             changes.append(_change(base, before, receive_wallet.balance))
