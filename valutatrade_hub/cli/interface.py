@@ -45,15 +45,41 @@ class CliUsageError(Exception):
     """Ошибка разбора аргументов команды."""
 
 
+_ARGPARSE_MESSAGES = (
+    ("the following arguments are required:", "не указаны обязательные аргументы:"),
+    ("unrecognized arguments:", "неизвестные аргументы:"),
+    ("expected one argument", "требуется значение"),
+    ("invalid choice:", "недопустимое значение:"),
+    ("choose from", "допустимые значения:"),
+    ("argument ", "аргумент "),
+)
+
+
 class _CommandParser(argparse.ArgumentParser):
-    """ArgumentParser, который не завершает процесс при ошибке."""
+    """ArgumentParser с русскими сообщениями, не завершающий процесс при ошибке."""
+
+    def parse_args(self, args=None, namespace=None):
+        known = {opt for action in self._actions for opt in action.option_strings}
+        unknown = [
+            arg
+            for arg in args or []
+            if arg.startswith("--") and arg.split("=")[0] not in known
+        ]
+        if unknown:
+            self.error(f"unrecognized arguments: {' '.join(unknown)}")
+        return super().parse_args(args, namespace)
 
     def error(self, message: str) -> None:
+        for english, russian in _ARGPARSE_MESSAGES:
+            message = message.replace(english, russian)
         raise CliUsageError(f"{message}\nСправка: help {self.prog}")
 
 
 def _positive_int(value: str) -> int:
-    number = int(value)
+    try:
+        number = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("ожидается целое число") from None
     if number <= 0:
         raise argparse.ArgumentTypeError("ожидается положительное целое число")
     return number
@@ -63,7 +89,7 @@ def _build_parsers() -> dict[str, argparse.ArgumentParser]:
     parsers: dict[str, argparse.ArgumentParser] = {}
 
     def add(name: str, description: str) -> argparse.ArgumentParser:
-        parser = _CommandParser(prog=name, description=description, add_help=True)
+        parser = _CommandParser(prog=name, description=description, allow_abbrev=False)
         parsers[name] = parser
         return parser
 
